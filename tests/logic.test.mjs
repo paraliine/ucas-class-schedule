@@ -1,12 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { overlaps, conflicts, conflictPairs, filterCourses, validateImport, csvCell } from '../src/logic.mjs';
+import { overlaps, conflicts, conflictPairs, filterCourses, validateImport, csvCell, nextPlanName } from '../src/logic.mjs';
 import { buildTimetableHtml } from '../src/export.mjs';
 import { layoutSchedule } from '../src/schedule.mjs';
 import { calendarDay, currentTeachingWeek, weekDates } from '../src/semester.mjs';
 
 const session = (weeks, periods = [1, 2], day = 2) => ({ weeks, periods, day });
 const course = (id, weeks = [2, 3]) => ({ id, name: `课程${id}`, code: id, academy: '数学科学学院', campus: '雁栖湖', attribute: '专业课', chief: '张老师', teachers: '', capacity: 30, enrolled: 20, sessions: [session(weeks)], credits: 2 });
+
+test('automatic plan names use Chinese numbers and reuse gaps without renaming existing plans', () => {
+  const plans = [];
+  for (let i = 0; i < 20; i++) plans.push({ name: nextPlanName(plans) });
+  assert.equal(plans[0].name, '方案一');
+  assert.equal(plans[1].name, '方案二');
+  assert.equal(plans[9].name, '方案十');
+  assert.equal(plans[10].name, '方案十一');
+  assert.equal(plans[19].name, '方案二十');
+  const remaining = plans.filter(plan => plan.name !== '方案二');
+  remaining.push({ name: '我的方案' });
+  const before = structuredClone(remaining);
+  assert.equal(nextPlanName(remaining), '方案二');
+  assert.deepEqual(remaining, before);
+});
 
 test('conflicts require shared weekday, period and teaching week', () => {
   assert.equal(overlaps(session([2, 4]), session([1, 3])), false);

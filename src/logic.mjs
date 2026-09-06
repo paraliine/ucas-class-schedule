@@ -1,3 +1,12 @@
+export function nextPlanName(plans) {
+  const numbers = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+    '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
+  const names = new Set(plans.map(plan => plan.name));
+  const name = numbers.map(number => `方案${number}`).find(candidate => !names.has(candidate));
+  if (!name) throw new Error('最多保留 20 个方案');
+  return name;
+}
+
 export function hasSchedule(course) {
   return course.sessions.length > 0 && course.sessions.every(s => s.day && s.periods.length && s.weeks.length);
 }

@@ -1,13 +1,14 @@
-import { hasSchedule, conflicts, courseFamily, summary, filterCourses, csvCell, validateImport } from './logic.mjs';
+import { hasSchedule, conflicts, courseFamily, summary, filterCourses, csvCell, validateImport, nextPlanName } from './logic.mjs';
 import { buildTimetableHtml } from './export.mjs';
 import { layoutSchedule } from './schedule.mjs';
 import { calendarDay, localDate, weekDates, currentTeachingWeek } from './semester.mjs';
+import { initControls, syncControls, closePicker } from './controls.mjs';
 import { isNative, getCatalog, getCourse, saveFile, printPage, setupPlatform } from './platform.mjs';
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icon = name => `<i data-lucide="${name}"></i>`;
-const icons = () => window.lucide?.createIcons();
+const icons = () => { syncControls(); window.lucide?.createIcons(); };
 const days = ['一', '二', '三', '四', '五', '六', '日'];
 let courses = [], meta = {}, courseMap = new Map(), plans = [], activePlan, storageKey;
 let view = 'catalog', page = 1, teachingWeek = 0, saveFailed = false, toastTimer;
@@ -44,7 +45,7 @@ function restore() {
       semesterStart = calendarDay(saved.semesterStart) !== null ? saved.semesterStart : '';
     }
   } catch { toast('已存方案无法读取，已创建新方案'); }
-  if (!activePlan) { activePlan = { id: crypto.randomUUID(), name: '方案一', ids: [] }; plans = [activePlan]; }
+  if (!activePlan) { activePlan = { id: crypto.randomUUID(), name: nextPlanName([]), ids: [] }; plans = [activePlan]; }
 }
 
 async function download(content, filename, type) {
@@ -53,6 +54,7 @@ async function download(content, filename, type) {
 }
 
 function modal(html) {
+  closePicker();
   $('modal-content').innerHTML = html;
   if (!$('modal').open) $('modal').showModal();
   icons();
@@ -63,14 +65,14 @@ function modalHead(title, subtitle = '') {
 }
 
 function confirmAction(title, message, label, action, { input = null, danger = false } = {}) {
-  modal(`${modalHead(title)}<form id="confirm-form"><div class="modal-body"><p class="modal-message">${esc(message)}</p>${input !== null ? `<input id="modal-input" class="modal-input" aria-label="方案名称" required maxlength="40" value="${esc(input)}">` : ''}</div><div class="modal-footer"><button type="button" class="button secondary" data-close>取消</button><button type="submit" class="button ${danger ? 'danger' : 'primary'}">${esc(label)}</button></div></form>`);
+  modal(`${modalHead(title)}<form id="confirm-form"><div class="modal-body"><p class="modal-message">${esc(message)}</p>${input !== null ? `<input id="modal-input" class="modal-input" aria-label="方案名称" aria-describedby="form-error" required maxlength="40" value="${esc(input)}"><p id="form-error" class="form-error" role="status"></p>` : ''}</div><div class="modal-footer"><button type="button" class="button secondary" data-close>取消</button><button type="submit" class="button ${danger ? 'danger' : 'primary'}">${esc(label)}</button></div></form>`);
   $('confirm-form').addEventListener('submit', event => {
     event.preventDefault();
     const value = $('modal-input')?.value.trim();
-    if (input !== null && !value) { $('modal-input').setCustomValidity('请输入方案名称'); $('modal-input').reportValidity(); return; }
+    if (input !== null && !value) { $('form-error').textContent = '请输入方案名称'; $('modal-input').setAttribute('aria-invalid', 'true'); $('modal-input').focus(); return; }
     $('modal').close(); action(value);
   });
-  if (input !== null) { $('modal-input').focus(); $('modal-input').select(); $('modal-input').addEventListener('input', () => $('modal-input').setCustomValidity('')); }
+  if (input !== null) { $('modal-input').focus(); $('modal-input').select(); $('modal-input').addEventListener('input', () => { $('form-error').textContent = ''; $('modal-input').removeAttribute('aria-invalid'); }); }
 }
 
 function toggleCourse(id) {
@@ -167,6 +169,7 @@ function renderTimetable() {
   }
   const unknown = items.filter(c => !hasSchedule(c));
   $('unscheduled').innerHTML = unknown.length ? `<div class="unknown-notice">时间未完整公布：${unknown.map(c => esc(c.name)).join('、')}</div>` : '';
+  syncControls();
 }
 
 function render() {
@@ -221,7 +224,7 @@ function editSemester() {
   $('semester-start').addEventListener('input', () => { $('semester-preview').textContent = range($('semester-start').value); });
   $('semester-form').addEventListener('submit', event => {
     event.preventDefault();
-    if (calendarDay($('semester-start').value) === null) return;
+    if (calendarDay($('semester-start').value) === null) { $('semester-preview').textContent = '请选择学期开始日期'; $('semester-start').setAttribute('aria-invalid', 'true'); return; }
     semesterStart = $('semester-start').value;
     jumpToCurrentWeek(); $('modal').close();
   });
@@ -231,6 +234,7 @@ function exportHtml() {
   if (!selected().length) { toast('请先选择课程'); return; }
   modal(`${modalHead('导出 HTML 课表', activePlan.name)}<form id="export-html-form"><div class="modal-body"><dl class="detail-grid"><div><dt>文件格式</dt><dd>独立 HTML 网页</dd></div><div><dt>课程数</dt><dd>${selected().length} 门</dd></div><div><dt>默认教学周</dt><dd><select id="export-week" aria-label="导出默认教学周">${$('week').innerHTML}</select></dd></div></dl></div><div class="modal-footer"><button type="button" class="button secondary" data-close>取消</button><button class="button primary" type="submit">${icon('download')}导出 HTML</button></div></form>`);
   $('export-week').value = $('week').value;
+  icons();
   $('export-html-form').addEventListener('submit', async event => {
     event.preventDefault();
     const html = buildTimetableHtml({ name: activePlan.name, term: meta.term, courses: selected(), week: Number($('export-week').value), termWeeks });
@@ -279,7 +283,7 @@ function bindEvents() {
     confirmAction(duplicate ? '复制方案' : '新建方案', '', '保存方案', name => {
       const plan = { id: crypto.randomUUID(), name, ids: duplicate ? [...activePlan.ids] : [] };
       plans.push(plan); activePlan = plan; persist(); render();
-    }, { input: duplicate ? `${activePlan.name} 副本` : `方案 ${plans.length + 1}` });
+    }, { input: duplicate ? `${activePlan.name} 副本` : nextPlanName(plans) });
   };
   $('new-plan').addEventListener('click', () => createPlan()); $('duplicate-plan').addEventListener('click', () => createPlan(true));
   $('rename-plan').addEventListener('click', () => confirmAction('重命名方案', '', '保存', name => { activePlan.name = name; persist(); render(); }, { input: activePlan.name }));
@@ -305,6 +309,10 @@ function bindEvents() {
 }
 
 async function init() {
+  initControls({ weekDetail: value => {
+    const dates = weekDates(semesterStart, Number(value));
+    return dates.length ? `${Number(dates[0].slice(5, 7))}/${Number(dates[0].slice(8))} - ${Number(dates[6].slice(5, 7))}/${Number(dates[6].slice(8))}` : '';
+  } });
   icons();
   try {
     const data = await getCatalog(); courses = data.courses.map(({ capacity, enrolled, ...course }) => course); meta = data.meta;
@@ -323,6 +331,7 @@ async function init() {
     $('term-label').textContent = meta.term.replace('学年(秋)第一学期', ' 秋季');
     bindEvents(); changeView(isNative ? 'timetable' : 'catalog');
     setupPlatform({ onResume: jumpToCurrentWeek, onBack: () => {
+      if (closePicker()) return true;
       if ($('modal').open) { $('modal').close(); return true; }
       if ($('plan-menu').open) { $('plan-menu').open = false; return true; }
       if (view !== 'timetable') { changeView('timetable'); return true; }

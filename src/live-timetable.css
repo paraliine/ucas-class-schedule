@@ -13,16 +13,18 @@
 .period-column { position: sticky; left: 0; z-index: 2; background: #fafbfd; }
 .schedule-label { height: var(--slot-height); display: flex; align-items: center; justify-content: center; font-size: 9px; color: #b3bdca; border-bottom: 1px solid #edf1f5; }
 .day-column { position: relative; border-left: 1px solid #edf1f5; height: calc(13 * var(--slot-height)); background: repeating-linear-gradient(to bottom, #fff 0, #fff calc(var(--slot-height) - 1px), #edf1f5 calc(var(--slot-height) - 1px), #edf1f5 var(--slot-height)); }
-.schedule-event { position: absolute; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 3px; border-radius: 4px; border: 0; border-left: 2px solid #79a1d6; background: #eaf2fc; color: #3e6b9e; padding: 7px 5px; text-align: left; line-height: 1.4; overflow: hidden; }
+.schedule-event { position: absolute; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 3px; border-radius: 4px; border: 0; border-left: 2px solid #79a1d6; background: #e0ecfa; color: #315e90; padding: 7px 5px; text-align: left; line-height: 1.4; overflow: hidden; }
 .schedule-event strong { font-size: 10px; font-weight: 550; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; flex-shrink: 1; }
-.schedule-event small { font-size: 9px; opacity: .75; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; flex-shrink: 1; }
-.schedule-event.color-1 { background: #e9f4ee; border-color: #88b09b; color: #548369; }
-.schedule-event.color-2 { background: #f8f1df; border-color: #cbb779; color: #9b854c; }
-.schedule-event.color-3 { background: #f7eaf0; border-color: #c994ac; color: #a36683; }
-.schedule-event.color-4 { background: #eeeaf8; border-color: #aa9aca; color: #8570aa; }
-.schedule-event.color-5 { background: #e8f4f5; border-color: #7eafb5; color: #4e8b94; }
+.schedule-event small { font-size: 9px; opacity: .9; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; flex-shrink: 1; }
+.schedule-event.color-1 { background: #ddece4; border-color: #88b09b; color: #416e55; }
+.schedule-event.color-2 { background: #f3e9cf; border-color: #cbb779; color: #745f2c; }
+.schedule-event.color-3 { background: #f2dee8; border-color: #c994ac; color: #8d536e; }
+.schedule-event.color-4 { background: #e6dff3; border-color: #aa9aca; color: #705b96; }
+.schedule-event.color-5 { background: #dcecef; border-color: #7eafb5; color: #3c727b; }
 .schedule-event.conflict { border-color: #ca7c72; background: #faeae6; color: #a85e53; }
-.schedule-event:hover { filter: brightness(.98); background-color: #e1ebf8 !important; }
+@media (hover: hover) and (pointer: fine) {
+  .schedule-event:hover { filter: brightness(.98); background-color: #e1ebf8 !important; }
+}
 .live-timetable .conflict-notice, .live-timetable .unknown-notice { max-height: 70px; overflow: auto; }
 .content-layout.timetable-focus { grid-template-columns: minmax(0, 1fr); max-width: 1220px; margin: auto; }
 .timetable-focus .live-timetable { position: static; padding: 0; border: 0; }

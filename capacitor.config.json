@@ -4,5 +4,6 @@
   "webDir": "mobile-www",
   "server": { "androidScheme": "https" },
   "android": { "backgroundColor": "#ffffff", "allowMixedContent": false },
+  "plugins": { "SystemBars": { "style": "LIGHT", "insetsHandling": "disable" } },
   "loggingBehavior": "none"
 }
