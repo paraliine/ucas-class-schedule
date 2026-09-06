@@ -1,4 +1,5 @@
-import { hasSchedule, conflicts, courseFamily, summary, filterCourses, csvCell, validateImport, nextPlanName } from './logic.mjs';
+import { hasSchedule, conflicts, courseFamily, summary, filterCourses, csvCell, validateImport, nextPlanName, reviewCourseBatch } from './logic.mjs';
+import { initBulkImport } from './bulk-import.mjs';
 import { buildTimetableHtml } from './export.mjs';
 import { layoutSchedule } from './schedule.mjs';
 import { PERIOD_TIMES, formatPeriodTimes } from './periods.mjs';
@@ -14,6 +15,7 @@ const days = ['一', '二', '三', '四', '五', '六', '日'];
 let courses = [], meta = {}, courseMap = new Map(), plans = [], activePlan, storageKey;
 let view = 'catalog', page = 1, teachingWeek = 0, saveFailed = false, toastTimer;
 let semesterStart = '', termWeeks = 22, lastCalendarDate = localDate();
+let bulkImport;
 const PAGE_SIZE = 20;
 const filters = { query: '', academy: '', campus: '', attribute: '', day: '', noConflict: false };
 const selected = () => (activePlan?.ids || []).map(id => courseMap.get(id)).filter(Boolean);
@@ -90,6 +92,27 @@ function toggleCourse(id) {
   if (!hasSchedule(c)) messages.push('这门课程的时间信息未完整公布，无法完成全部冲突检查。');
   const add = () => { activePlan.ids.push(id); persist(); render(); toast(`已选 ${c.name}`); };
   if (messages.length) confirmAction('加入选课方案', messages.join('\n\n'), '仍然加入', add);
+  else add();
+}
+
+function addCourseBatch(ids, planId, onSuccess) {
+  if (activePlan.id !== planId) { toast('方案已切换，请重新匹配课程'); return; }
+  const review = reviewCourseBatch(ids.map(id => courseMap.get(id)).filter(Boolean), selected());
+  if (!review.incoming.length) { bulkImport.sync(); return; }
+  if (review.overLimit) { toast('每个方案最多保留 300 门课程'); return; }
+  const messages = [];
+  const pairs = items => items.slice(0, 8).map(pair => pair.map(course => course.name).join(' / ')).join('\n') + (items.length > 8 ? `\n另 ${items.length - 8} 组` : '');
+  if (review.conflicts.length) messages.push(`时间冲突（${review.conflicts.length} 组）：\n${pairs(review.conflicts)}`);
+  if (review.duplicates.length) messages.push(`同一课程的不同记录或班级（${review.duplicates.length} 组）：\n${pairs(review.duplicates)}`);
+  if (review.unknown.length) messages.push(`时间未完整公布（${review.unknown.length} 门）：\n${review.unknown.slice(0, 8).map(course => course.name).join('、')}${review.unknown.length > 8 ? '等' : ''}`);
+  const add = () => {
+    if (activePlan.id !== planId) { toast('方案已切换，请重新匹配课程'); return; }
+    const incoming = review.incoming.filter(course => !activePlan.ids.includes(course.id));
+    if (activePlan.ids.length + incoming.length > 300) { toast('每个方案最多保留 300 门课程'); return; }
+    activePlan.ids.push(...incoming.map(course => course.id));
+    persist(); onSuccess(); changeView('timetable'); toast(`已添加 ${incoming.length} 门课程`);
+  };
+  if (messages.length) confirmAction(`添加 ${review.incoming.length} 门到${activePlan.name}`, messages.join('\n\n'), '仍然添加', add);
   else add();
 }
 
@@ -175,7 +198,7 @@ function renderTimetable() {
 
 function render() {
   renderPlans(); renderStats();
-  if (view === 'catalog') renderCatalog();
+  if (view === 'catalog') { renderCatalog(); bulkImport?.sync(); }
   if (view === 'selected') renderSelected();
   renderTimetable();
   icons();
@@ -183,6 +206,8 @@ function render() {
 
 function changeView(next) {
   if (!['catalog', 'selected', 'timetable'].includes(next)) return;
+  if (view !== next) { clearTimeout(toastTimer); $('toast').hidden = true; }
+  if (next === 'catalog' && view !== 'catalog') bulkImport?.openSearch();
   view = next;
   document.body.dataset.view = view;
   for (const key of ['catalog', 'selected']) $(`${key}-view`).hidden = key !== view;
@@ -245,6 +270,7 @@ function exportHtml() {
 }
 
 function bindEvents() {
+  bulkImport = initBulkImport({ getCourses: () => courses, getPlan: () => activePlan, onAdd: addCourseBatch, teacher, shortTime, icons });
   document.addEventListener('click', event => {
     if (!event.target.closest('#plan-menu')) $('plan-menu').open = false;
     const button = event.target.closest('button'); if (!button) return;

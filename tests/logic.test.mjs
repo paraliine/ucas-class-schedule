@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { overlaps, conflicts, conflictPairs, filterCourses, validateImport, csvCell, nextPlanName } from '../src/logic.mjs';
+import { overlaps, conflicts, conflictPairs, filterCourses, validateImport, csvCell, nextPlanName, matchCourseCodes, reviewCourseBatch } from '../src/logic.mjs';
 import { buildTimetableHtml } from '../src/export.mjs';
 import { layoutSchedule } from '../src/schedule.mjs';
 import { calendarDay, currentTeachingWeek, weekDates } from '../src/semester.mjs';
@@ -21,6 +21,44 @@ test('lesson clock times preserve gaps and cover the last evening period', () =>
 
 const session = (weeks, periods = [1, 2], day = 2) => ({ weeks, periods, day });
 const course = (id, weeks = [2, 3]) => ({ id, name: `课程${id}`, code: id, academy: '数学科学学院', campus: '雁栖湖', attribute: '专业课', chief: '张老师', teachers: '', capacity: 30, enrolled: 20, sessions: [session(weeks)], credits: 2 });
+
+test('batch matching accepts pasted separators, normalizes case and preserves class suffixes', () => {
+  const a = { ...course('a'), code: '180081070200P1001H-1' };
+  const b = { ...course('b'), code: '180081070200P1001H-2' };
+  const result = matchCourseCodes('180081070200p1001h-1\t180081070200P1001H-2\n180081070200P1001H-1，missing；OTHER、LAST|END', [a, b]);
+  assert.equal(result.duplicates, 1);
+  assert.deepEqual(result.groups.map(group => group.courses), [[a], [b], [], [], [], []]);
+  assert.equal(matchCourseCodes('１８００８１０７０２００Ｐ１００１Ｈ－１', [a]).groups[0].courses[0], a);
+  assert.equal(matchCourseCodes('180081070200P1001H', [a, b]).groups[0].courses.length, 0);
+});
+
+test('batch matching retains ambiguous records and rejects empty or excessive input', () => {
+  const a = { ...course('a'), code: 'SAME' }, b = { ...course('b'), code: 'SAME' };
+  assert.deepEqual(matchCourseCodes('same', [a, b]).groups[0].courses, [a, b]);
+  assert.throws(() => matchCourseCodes(' \n，;', [a]), /请输入/);
+  assert.throws(() => matchCourseCodes('A'.repeat(20001), [a]), /输入过长/);
+  assert.throws(() => matchCourseCodes(Array.from({ length: 301 }, (_, i) => `C${i}`).join('\n'), []), /300/);
+});
+
+test('batch review deduplicates selections, checks internal conflicts and never blocks on quota', () => {
+  const a = course('a'), b = { ...course('b'), capacity: 0, enrolled: 100 };
+  const c = course('c'), unknown = { ...course('unknown'), sessions: [] };
+  const review = reviewCourseBatch([a, b, b, c, unknown], [a]);
+  assert.deepEqual(review.incoming, [b, c, unknown]);
+  assert.deepEqual(review.conflicts, [[a, b], [a, c], [b, c]]);
+  assert.deepEqual(review.unknown, [unknown]);
+  assert.equal(review.overLimit, false);
+  assert.deepEqual(reviewCourseBatch([course('d', [5])], [a, b]).conflicts, []);
+});
+
+test('batch review flags sibling classes and applies the plan size limit after deduplication', () => {
+  const a = { ...course('a'), code: '180081070200P1001H-1' };
+  const b = { ...course('b', [5]), code: '180081070200P1001H-2' };
+  assert.deepEqual(reviewCourseBatch([a, b], []).duplicates, [[a, b]]);
+  const selected = Array.from({ length: 300 }, (_, i) => ({ ...course(`C${i}`), sessions: [] }));
+  assert.equal(reviewCourseBatch([selected[0]], selected).overLimit, false);
+  assert.equal(reviewCourseBatch([a], selected).overLimit, true);
+});
 
 test('automatic plan names use Chinese numbers and reuse gaps without renaming existing plans', () => {
   const plans = [];

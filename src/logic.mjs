@@ -23,6 +23,37 @@ export function conflictPairs(selected) {
   return selected.flatMap((course, i) => conflicts(course, selected.slice(i + 1)).map(other => [course, other]));
 }
 
+export function matchCourseCodes(text, courses) {
+  if (text.length > 20000) throw new Error('输入过长，请分批添加');
+  const normalize = code => code.normalize('NFKC').trim().toUpperCase();
+  const tokens = normalize(text).split(/[\s,，;；、|]+/).filter(Boolean);
+  const codes = [...new Set(tokens)];
+  if (!codes.length) throw new Error('请输入课程编码');
+  if (codes.length > 300) throw new Error('每次最多匹配 300 个课程编码');
+  const byCode = new Map();
+  for (const course of courses) {
+    const code = normalize(course.code);
+    if (!byCode.has(code)) byCode.set(code, []);
+    byCode.get(code).push(course);
+  }
+  return { duplicates: tokens.length - codes.length, groups: codes.map(code => ({ code, courses: byCode.get(code) || [] })) };
+}
+
+export function reviewCourseBatch(candidates, selected) {
+  const existing = new Set(selected.map(course => course.id));
+  const incoming = [...new Map(candidates.map(course => [course.id, course])).values()].filter(course => !existing.has(course.id));
+  const incomingIds = new Set(incoming.map(course => course.id));
+  const combined = [...selected, ...incoming];
+  const touchesBatch = pair => pair.some(course => incomingIds.has(course.id));
+  return {
+    incoming,
+    overLimit: combined.length > 300,
+    conflicts: conflictPairs(combined).filter(touchesBatch),
+    duplicates: combined.flatMap((course, i) => combined.slice(i + 1).filter(other => courseFamily(course) === courseFamily(other)).map(other => [course, other])).filter(touchesBatch),
+    unknown: incoming.filter(course => !hasSchedule(course)),
+  };
+}
+
 export function courseFamily(course) {
   return course.code.replace(/-\d+$/, '').replace(/[HY]$/, '');
 }

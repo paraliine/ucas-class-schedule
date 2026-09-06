@@ -9,7 +9,7 @@
     "sync:android": "npm run prepare:app && cap sync android",
     "build:apk": "python3 scripts/build_apk.py",
     "test": "node --test tests/logic.test.mjs",
-    "test:app": "npm run prepare:app && node tests/native-browser.mjs"
+    "test:app": "npm run prepare:app && node tests/native-browser.mjs && node tests/bulk-browser.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",

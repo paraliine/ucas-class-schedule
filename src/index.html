@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="live-timetable.css">
   <link rel="stylesheet" href="native.css">
   <link rel="stylesheet" href="controls.css">
+  <link rel="stylesheet" href="bulk-import.css">
   <script defer src="assets/lucide.js"></script>
   <script type="module" src="app.mjs?v=1.1-semester"></script>
 </head>
@@ -33,11 +34,24 @@
     <div class="content-layout">
       <div class="primary-content">
         <section id="catalog-view" aria-label="课程检索">
+          <div class="catalog-modes" role="tablist" aria-label="添加课程方式"><button id="catalog-search-tab" role="tab" data-catalog-mode="search" aria-selected="true" aria-controls="catalog-search">搜索选课</button><button id="catalog-bulk-tab" role="tab" data-catalog-mode="bulk" aria-selected="false" aria-controls="catalog-bulk" tabindex="-1">批量添加</button></div>
+          <div id="catalog-search" role="tabpanel" aria-labelledby="catalog-search-tab">
           <div class="filter-bar"><div class="search-field"><i data-lucide="search"></i><input id="search" type="search" placeholder="课程名称、编码或教师" aria-label="搜索课程名称、编码或教师"></div><div class="filter-grid"><select id="academy" aria-label="开课院系"><option value="">全部院系</option></select><select id="campus" aria-label="开课校区"><option value="">全部校区</option></select><select id="attribute" aria-label="课程属性"><option value="">全部属性</option></select><select id="day" aria-label="上课星期"><option value="">全部星期</option><option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="7">星期日</option></select></div><div class="filter-options"><label><input id="noConflict" type="checkbox">时间已知且无冲突</label><button class="text-button" id="reset-filters">重置</button></div></div>
           <div class="results-bar"><span id="result-count" aria-live="polite">正在读取课程…</span><select id="sort" aria-label="排序方式"><option value="default">默认排序</option><option value="credits-desc">学分从高到低</option><option value="credits-asc">学分从低到高</option><option value="name">课程名称排序</option></select></div>
           <div class="table-wrap"><table class="course-table"><thead><tr><th>课程</th><th>教师 / 校区</th><th>学分</th><th>上课时间</th><th class="action-col">操作</th></tr></thead><tbody id="course-rows"></tbody></table></div>
           <div id="empty-state" class="empty-state" hidden><i data-lucide="search-x"></i><h3>没有符合条件的课程</h3><button class="button secondary" id="empty-reset">重置筛选</button></div>
           <footer class="pagination"><span id="page-summary"></span><div><button class="icon-button" id="prev-page" aria-label="上一页" title="上一页"><i data-lucide="chevron-left"></i></button><span id="page-number">1 / 1</span><button class="icon-button" id="next-page" aria-label="下一页" title="下一页"><i data-lucide="chevron-right"></i></button></div></footer>
+          </div>
+          <div id="catalog-bulk" role="tabpanel" aria-labelledby="catalog-bulk-tab" hidden>
+            <form id="bulk-match-form" novalidate>
+              <div class="bulk-input-heading"><label for="bulk-codes">课程编码</label><button id="bulk-clear" type="button" class="icon-button" title="清空编码" aria-label="清空编码"><i data-lucide="x"></i></button></div>
+              <textarea id="bulk-codes" aria-describedby="bulk-error" placeholder="180080025200M3001H&#10;180080070100M1001H" spellcheck="false" autocapitalize="characters" autocorrect="off"></textarea>
+              <p id="bulk-error" role="status"></p>
+              <button id="bulk-match" type="submit" class="button secondary"><i data-lucide="list-checks"></i>匹配课程</button>
+            </form>
+            <section id="bulk-review" aria-label="课程匹配结果" hidden><div class="bulk-results-heading"><h2 id="bulk-summary" tabindex="-1" aria-live="polite"></h2><p id="bulk-duplicates"></p></div><div id="bulk-results"></div></section>
+            <div id="bulk-footer" hidden><p id="bulk-limit" role="status"></p><button id="bulk-add" class="button primary" disabled><i data-lucide="plus"></i><span id="bulk-add-label">添加到方案</span></button></div>
+          </div>
         </section>
         <section id="selected-view" hidden><div class="section-toolbar"><h2 id="selected-heading">已选课程</h2><div><button class="button secondary" id="export-csv"><i data-lucide="file-spreadsheet"></i>导出 CSV</button><button class="icon-button" id="clear-plan" title="清空当前方案" aria-label="清空当前方案"><i data-lucide="trash-2"></i></button></div></div><div id="selected-list"></div></section>
       </div>
