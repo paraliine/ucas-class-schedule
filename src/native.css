@@ -1,0 +1,65 @@
+body.native-app { background: #fff; padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)); }
+.native-app .native-only { display: inline-flex !important; }
+.native-app .web-only, .native-app .app-header nav, .native-app .workbar,
+.native-app .page-footer, .native-app .brand img, .native-app .live-tools,
+.native-app .save-state { display: none !important; }
+.native-app .app-header {
+  min-height: calc(64px + var(--safe-area-inset-top, 0px)); padding: calc(8px + var(--safe-area-inset-top, 0px)) 14px 8px; gap: 8px; flex-wrap: nowrap;
+  position: sticky; top: 0; border-bottom: 0;
+}
+.native-app .brand { font-size: 18px; }
+.native-app .brand-group { gap: 4px; min-width: 0; }
+.native-app .header-actions { gap: 4px; }
+.native-app .plan-control { width: 95px; }
+.native-app .plan-control select { font-size: 12px; }
+.native-app .icon-button { width: 38px; height: 38px; }
+.native-app .add-course { color: #426dab; }
+.native-app .add-course svg { width: 23px; height: 23px; stroke-width: 2; }
+.native-app .menu-content { top: 42px; width: 195px; }
+.native-app .menu-content button { min-height: 43px; font-size: 13px; }
+.native-app main { padding: 0 10px 14px; }
+.native-app .content-layout { display: block; max-width: none; }
+.native-app .live-timetable { position: static; padding: 0; border: 0; }
+.native-app .live-heading { display: none; }
+.native-app .live-week-toolbar { padding: 2px 2px 9px; margin: 0; min-height: 46px; }
+.native-app .live-week-toolbar select { font-size: 15px; height: 36px; }
+.native-app #timetable-status { font-size: 10px; max-width: 135px; }
+.native-app .schedule-wrap { max-height: none; border: 0; border-radius: 0; overflow: visible; }
+.native-app .timetable { --slot-height: 57px; grid-template-columns: 18px repeat(7, minmax(0, 1fr)); }
+.native-app .schedule-header { top: calc(64px + var(--safe-area-inset-top, 0px)); font-size: 11px; padding: 10px 1px; background: #fff; color: #8596ae; }
+.native-app .schedule-header small { display: block; margin-top: 3px; font-size: 10px; }
+.native-app .schedule-header.is-today { color: #2859a4; font-weight: 600; background: #eef4fc; }
+.native-app .semester-toolbar { display: flex !important; width: 100%; justify-content: space-between; align-items: center; margin: -5px 0 2px; min-height: 32px; }
+.native-app .semester-toolbar .icon-button { width: 32px; height: 32px; }
+.native-app .semester-date-field { display: grid; gap: 10px; font-size: 14px; }
+.native-app #semester-start { width: 100%; min-height: 44px; font: inherit; }
+.native-app #semester-preview { font-size: 11px; margin-top: 12px; color: #7a828c; }
+.native-app .period-column { background: #fff; }
+.native-app .schedule-label { border-bottom: 0; color: #b8c2ce; font-size: 9px; }
+.native-app .day-column { border-left-color: #f0f3f7; }
+.native-app .schedule-event { border-left: 0; padding: 7px 4px; border-radius: 5px; gap: 4px; }
+.native-app .schedule-event strong { font-size: 11px; line-height: 1.4; -webkit-line-clamp: 4; }
+.native-app .schedule-event small { font-size: 9px; line-height: 1.4; -webkit-line-clamp: 2; }
+.native-app[data-view="timetable"] #mobile-back { display: none !important; }
+.native-app[data-view="catalog"] .live-timetable, .native-app[data-view="selected"] .live-timetable { display: none; }
+.native-app:not([data-view="timetable"]) .brand { font-size: 17px; }
+.native-app:not([data-view="timetable"]) #add-courses { display: none !important; }
+.native-app[data-view="catalog"] .plan-control { display: none; }
+.native-app .primary-content { padding: 0 4px; }
+.native-app .primary-content button, .native-app .primary-content input, .native-app .primary-content select { scroll-margin-top: 80px; }
+.native-app .search-field { height: 42px; margin: 4px 0 10px; }
+.native-app .search-field input { font-size: 14px; }
+.native-app .filter-grid select { height: 38px; }
+.native-app .course-table tr { padding: 16px 12px; }
+.native-app .enroll-button { min-height: 36px; min-width: 56px; }
+.native-app .course-name { font-size: 14px; }
+.native-app .toast { bottom: 20px; font-size: 12px; }
+.native-app dialog { width: calc(100% - 24px); max-height: 90dvh; }
+.native-app .modal-footer .button { min-height: 40px; }
+@media (max-width: 360px) {
+  .native-app .brand { font-size: 16px; }
+  .native-app .plan-control { width: 80px; }
+  .native-app .app-header { padding-left: 10px; padding-right: 10px; }
+  .native-app .schedule-event { padding: 6px 3px; }
+  .native-app .schedule-event strong { font-size: 10px; }
+}

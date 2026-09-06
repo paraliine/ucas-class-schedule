@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">国科大课表</string>
+    <string name="title_activity_main">国科大课表</string>
+    <string name="package_name">cn.local.ucascourseplanner</string>
+    <string name="custom_url_scheme">cn.local.ucascourseplanner</string>
+</resources>

@@ -1,0 +1,25 @@
+{
+  "name": "ucas-timetable-android",
+  "version": "1.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:app": "node scripts/prepare.mjs",
+    "sync:android": "npm run prepare:app && cap sync android",
+    "build:apk": "python3 scripts/build_apk.py",
+    "test": "node --test tests/logic.test.mjs",
+    "test:app": "npm run prepare:app && node tests/native-browser.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "esbuild": "^0.28.2",
+    "lucide": "^0.468.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0"
+  }
+}

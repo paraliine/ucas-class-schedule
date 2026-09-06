@@ -1,0 +1,8 @@
+{
+  "appId": "cn.local.ucascourseplanner",
+  "appName": "国科大课表",
+  "webDir": "mobile-www",
+  "server": { "androidScheme": "https" },
+  "android": { "backgroundColor": "#ffffff", "allowMixedContent": false },
+  "loggingBehavior": "none"
+}

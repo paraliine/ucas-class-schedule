@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>国科大课表</title>
+  <link rel="icon" href="assets/ucas.ico">
+  <link rel="stylesheet" href="styles.css?v=20260906-columns-3">
+  <link rel="stylesheet" href="live-timetable.css">
+  <link rel="stylesheet" href="native.css">
+  <script defer src="assets/lucide.js"></script>
+  <script type="module" src="app.mjs?v=1.1-semester"></script>
+</head>
+<body data-view="catalog">
+  <header class="app-header">
+    <div class="brand-group"><button id="mobile-back" class="icon-button native-only" data-view="timetable" title="返回课表" aria-label="返回课表"><i data-lucide="arrow-left"></i></button><a class="brand" href="./"><img src="assets/ucas.ico" alt="国科大校徽" width="28" height="28"><span id="app-title">国科大课表</span></a></div>
+    <nav aria-label="主导航"><button class="nav-item active" data-view="catalog">选课</button><button class="nav-item" data-view="selected">已选 <span id="nav-selected">0</span></button><button class="nav-item" data-view="timetable">课表</button></nav>
+    <div class="header-actions">
+      <div class="plan-control"><select id="plan-select" aria-label="选课方案"></select></div>
+      <button class="icon-button add-course native-only" id="add-courses" data-view="catalog" title="添加课程" aria-label="添加课程"><i data-lucide="plus"></i></button>
+      <button class="button primary web-only" id="export-html"><i data-lucide="download"></i>导出课表</button>
+      <details class="plan-menu" id="plan-menu"><summary class="icon-button" title="方案与文件" aria-label="方案与文件"><i data-lucide="ellipsis"></i></summary><div class="menu-content">
+        <button id="new-plan"><i data-lucide="plus"></i>新建方案</button><button id="rename-plan"><i data-lucide="pencil"></i>重命名</button><button id="duplicate-plan"><i data-lucide="copy"></i>复制方案</button><button id="delete-plan"><i data-lucide="trash-2"></i>删除方案</button>
+        <hr><button id="import-plan"><i data-lucide="upload"></i>导入方案</button><button id="export-plan"><i data-lucide="download"></i>备份方案</button><button class="native-only" data-command="export-html"><i data-lucide="file-code-2"></i>导出 HTML 课表</button>
+        <hr><button class="native-only" id="semester-settings"><i data-lucide="calendar-cog"></i>学期设置</button><button id="data-info"><i data-lucide="database"></i>课程数据</button>
+      </div></details>
+    </div>
+  </header>
+  <main>
+    <div class="workbar"><div class="semester"><span id="term-label">2026–2027 秋季</span><span class="tag neutral">模拟选课</span></div><section class="stats" aria-label="选课统计"><div><span>已选</span><strong id="stat-count">0<small> 门</small></strong></div><div><strong id="stat-credits">0<small> 学分</small></strong></div><div><strong id="stat-hours">0<small> 学时</small></strong></div><div><strong id="stat-conflicts">0<small> 组冲突</small></strong></div></section></div>
+    <div class="content-layout">
+      <div class="primary-content">
+        <section id="catalog-view" aria-label="课程检索">
+          <div class="filter-bar"><div class="search-field"><i data-lucide="search"></i><input id="search" type="search" placeholder="课程名称、编码或教师" aria-label="搜索课程名称、编码或教师"></div><div class="filter-grid"><select id="academy" aria-label="开课院系"><option value="">全部院系</option></select><select id="campus" aria-label="开课校区"><option value="">全部校区</option></select><select id="attribute" aria-label="课程属性"><option value="">全部属性</option></select><select id="day" aria-label="上课星期"><option value="">全部星期</option><option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="7">星期日</option></select></div><div class="filter-options"><label><input id="noConflict" type="checkbox">时间已知且无冲突</label><button class="text-button" id="reset-filters">重置</button></div></div>
+          <div class="results-bar"><span id="result-count" aria-live="polite">正在读取课程…</span><select id="sort" aria-label="排序方式"><option value="default">默认排序</option><option value="credits-desc">学分从高到低</option><option value="credits-asc">学分从低到高</option><option value="name">课程名称排序</option></select></div>
+          <div class="table-wrap"><table class="course-table"><thead><tr><th>课程</th><th>教师 / 校区</th><th>学分</th><th>上课时间</th><th class="action-col">操作</th></tr></thead><tbody id="course-rows"></tbody></table></div>
+          <div id="empty-state" class="empty-state" hidden><i data-lucide="search-x"></i><h3>没有符合条件的课程</h3><button class="button secondary" id="empty-reset">重置筛选</button></div>
+          <footer class="pagination"><span id="page-summary"></span><div><button class="icon-button" id="prev-page" aria-label="上一页" title="上一页"><i data-lucide="chevron-left"></i></button><span id="page-number">1 / 1</span><button class="icon-button" id="next-page" aria-label="下一页" title="下一页"><i data-lucide="chevron-right"></i></button></div></footer>
+        </section>
+        <section id="selected-view" hidden><div class="section-toolbar"><h2 id="selected-heading">已选课程</h2><div><button class="button secondary" id="export-csv"><i data-lucide="file-spreadsheet"></i>导出 CSV</button><button class="icon-button" id="clear-plan" title="清空当前方案" aria-label="清空当前方案"><i data-lucide="trash-2"></i></button></div></div><div id="selected-list"></div></section>
+      </div>
+      <section id="timetable-view" class="live-timetable" aria-label="实时课表">
+        <div class="live-heading"><div><h2>课表 <span id="panel-count" class="tag neutral">0 门</span></h2><div class="plan-name" id="panel-plan-name">方案一</div></div><div class="live-tools"><button class="icon-button" id="expand-timetable" data-view="timetable" title="放大课表" aria-label="放大课表"><i data-lucide="maximize-2"></i></button><button class="icon-button" id="print-timetable" title="打印课表" aria-label="打印课表"><i data-lucide="printer"></i></button></div></div>
+        <div class="live-week-toolbar"><div><button class="icon-button" id="week-prev" title="上一周" aria-label="上一周"><i data-lucide="chevron-left"></i></button><select id="week" aria-label="教学周"><option value="0">全学期</option></select><button class="icon-button" id="week-next" title="下一周" aria-label="下一周"><i data-lucide="chevron-right"></i></button></div><span id="timetable-status" role="status"></span></div>
+        <div class="semester-toolbar native-only"><button id="semester-status" class="text-button">设置开学日期</button><button id="week-today" class="icon-button" title="回到本周" aria-label="回到本周"><i data-lucide="calendar-check"></i></button></div>
+        <div class="schedule-wrap"><div id="timetable" class="timetable"></div></div><div id="unscheduled"></div><div id="conflict-summary"></div><div class="save-state" id="save-state"><i data-lucide="hard-drive"></i>已保存在本机</div>
+      </section>
+    </div>
+    <footer class="page-footer"><span id="snapshot-label">本地课程快照</span><span>国科大公开开课表</span></footer>
+  </main>
+  <dialog id="modal"><div id="modal-content"></div></dialog><div id="toast" class="toast" role="status" hidden></div><input type="file" id="import-file" accept="application/json,.json" hidden>
+</body>
+</html>
