@@ -38,14 +38,14 @@ select { appearance: none; -webkit-appearance: none; height: 34px; border: 1px s
 .plan-control { width: 145px; min-width: 0; }
 .plan-control select { width: 100%; border-color: transparent; }
 .icon-button { width: 32px; height: 32px; flex-shrink: 0; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-.button { min-height: 33px; padding: 6px 11px; font-size: 12px; border-radius: 4px; white-space: nowrap; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 33px; padding: 6px 11px; font-size: 12px; border-radius: 4px; white-space: nowrap; }
 .button.primary { color: #fff; background: #2b5ca4; border: 1px solid #2b5ca4; }
 @media (hover: hover) and (pointer: fine) {
   .button.primary:hover:not(:disabled) { background: #244f8e; }
 }
 .button.secondary { border: 1px solid #dce1e7; background: #fff; }
 .button.danger { color: #fff; background: #ad4946; }
-.button svg { width: 15px; height: 15px; }
+.button svg { display: block; flex-shrink: 0; width: 15px; height: 15px; }
 .text-button { font-size: 11px; color: #858b93; padding: 3px 0; }
 .plan-menu { position: relative; }
 .plan-menu summary { list-style: none; }
@@ -139,7 +139,25 @@ dialog::backdrop { background: #1a2b4359; }
 .detail-tabs .active { border-color: #426fa8; color: #426fa8; }
 .session-row { display: grid; grid-template-columns: 135px 1fr; gap: 14px; padding: 12px 0; border-bottom: 1px solid #edf0f4; font-size: 12px; }
 .session-row small { font-size: 10px; color: #929ba6; display: block; margin-top: 5px; overflow-wrap: anywhere; }
-.syllabus { font-family: inherit; font-size: 12px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.syllabus { font-family: inherit; font-size: 12px; line-height: 1.85; overflow-wrap: anywhere; margin: 0; }
+.syllabus p { margin: 0 0 10px; }
+.syllabus .syllabus-intro { font-weight: 600; margin-bottom: 12px; }
+.syllabus-fields { margin: 0 0 24px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.syllabus-fields > div { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 4px 0; }
+.syllabus-fields dt { color: #788391; }
+.syllabus-fields dd { margin: 0; white-space: pre-line; }
+.syllabus section + section { margin-top: 26px; }
+.syllabus h3 { font-size: 14px; line-height: 1.5; margin: 0 0 12px; color: #303946; }
+.syllabus h4 { font-size: 12px; line-height: 1.7; margin: 20px 0 8px; font-weight: 600; }
+.syllabus-lessons, .syllabus-books { list-style: none; padding: 0; margin: 0; }
+.syllabus-lessons { padding-left: 12px; border-left: 2px solid #e4e9ef; }
+.syllabus-lessons li + li { margin-top: 7px; }
+.syllabus-lessons p { margin: 0; }
+.syllabus-books li { position: relative; padding-left: 24px; }
+.syllabus-books li + li { margin-top: 18px; }
+.syllabus-books p { margin: 0; }
+.syllabus-book-number { position: absolute; left: 0; color: #788391; }
+.syllabus-empty { color: #788391; }
 .modal-message { font-size: 13px; line-height: 1.9; white-space: pre-line; }
 .modal-input { width: 100%; border: 1px solid #dce2ea; padding: 9px 12px; border-radius: 4px; margin-top: 14px; }
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); max-width: calc(100% - 28px); background: #303d50; color: #fff; padding: 11px 18px; font-size: 12px; border-radius: 5px; z-index: 20; box-shadow: 0 5px 18px #142a4320; }

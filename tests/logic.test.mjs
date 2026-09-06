@@ -5,6 +5,26 @@ import { buildTimetableHtml } from '../src/export.mjs';
 import { layoutSchedule } from '../src/schedule.mjs';
 import { calendarDay, currentTeachingWeek, weekDates } from '../src/semester.mjs';
 import { PERIOD_TIMES, formatPeriodTimes } from '../src/periods.mjs';
+import { readFileSync } from 'node:fs';
+import { parseSyllabus, renderSyllabus } from '../src/syllabus.mjs';
+
+test('syllabus parsing preserves every nonempty line in the course snapshot', () => {
+  const { courses } = JSON.parse(readFileSync(new URL('../data/courses.json', import.meta.url), 'utf8'));
+  for (const course of courses) {
+    const parsed = parseSyllabus(course.syllabus);
+    const restored = [...parsed.introduction, ...parsed.fields.flatMap(field => [field.label, ...field.value.split('\n')]), ...parsed.sections.flatMap(section => [section.title, ...section.lines])];
+    assert.deepEqual(restored, course.syllabus.split(/\r?\n/).map(line => line.trim()).filter(Boolean), course.code);
+  }
+});
+
+test('syllabus sections separate chapters, continuation text and empty references safely', () => {
+  const html = renderSyllabus('示例\n英文名称：\nA & B\n大纲内容\n第一章 绪论\n第1节 实验\n<script>alert(1)</script>\n第2节 总结\n参考书\n课程教师信息\n简介');
+  assert.match(html, /<h4>第一章 绪论<\/h4>/);
+  assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;<\/p><\/li><li>/);
+  assert.match(html, /<h3>参考书<\/h3><p class="syllabus-empty">未公布/);
+  assert.ok(!html.includes('<script>'));
+  assert.match(html, /A &amp; B/);
+});
 
 test('lesson clock times preserve gaps and cover the last evening period', () => {
   assert.equal(PERIOD_TIMES.length, 13);

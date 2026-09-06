@@ -135,6 +135,20 @@ try {
   assert.match(await page.locator('.session-clock').first().innerText(), /08:30 - 10:05/);
   await page.locator('[data-detail-tab="syllabus"]').click();
   await page.waitForFunction(() => document.getElementById('detail-syllabus').textContent.includes('教学目的要求'));
+  assert.ok(await page.locator('#detail-overview').isHidden());
+  assert.ok(await page.locator('#detail-syllabus h4').count() > 0);
+  for (const width of [360, 390, 412]) {
+    await page.setViewportSize({ width, height: 844 });
+    const alignment = await page.locator('.modal-footer a.button').evaluate(link => {
+      const box = link.getBoundingClientRect(), icon = link.querySelector('svg').getBoundingClientRect(), label = link.querySelector('span').getBoundingClientRect();
+      return { horizontal: Math.abs((icon.left + label.right) / 2 - (box.left + box.right) / 2), vertical: Math.abs((icon.top + icon.bottom) / 2 - (label.top + label.bottom) / 2) };
+    });
+    assert.ok(alignment.horizontal < 1 && alignment.vertical < 1, JSON.stringify(alignment));
+    await page.screenshot({ path: `outputs/android-syllabus-${width}.png` });
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('[data-detail-tab="time"]').click();
+  assert.ok(await page.locator('#detail-overview').isVisible());
   await page.locator('[data-close]').click();
   const originalPlan = await page.locator('#plan-select').inputValue();
   await page.locator('#plan-menu summary').click();
@@ -211,6 +225,20 @@ try {
   await page.locator('#semester-form button[type="submit"]').click();
   assert.equal(await page.locator('#week').inputValue(), '4');
   assert.equal(await page.locator('#timetable .schedule-event').count(), 2);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('#add-courses').click();
+  await page.locator('#reset-filters').click();
+  await page.locator('#search').fill('180203083900P1002H-2');
+  await page.locator('.course-name[data-detail="316019"]').click();
+  await page.locator('[data-detail-tab="syllabus"]').click();
+  await page.waitForFunction(() => document.querySelectorAll('#detail-syllabus h4').length === 10);
+  await page.screenshot({ path: 'outputs/android-machine-learning-syllabus.png' });
+  await page.locator('#detail-syllabus h4').first().evaluate(element => element.scrollIntoView({ block: 'center' }));
+  await page.screenshot({ path: 'outputs/android-machine-learning-outline.png' });
+  await page.locator('#detail-syllabus section').last().evaluate(element => element.scrollIntoView({ block: 'center' }));
+  assert.ok(await page.locator('.modal-footer a.button').isVisible());
+  assert.ok(await page.locator('#detail-syllabus').evaluate(element => element.scrollWidth <= element.clientWidth));
+  await page.locator('[data-close]').click();
   assert.deepEqual(forbiddenRequests, []);
   assert.deepEqual(errors, []);
   console.log('PASS: Android timetable homepage, no all-semester mode, semester date settings, automatic week on launch/resume, Monday boundary, before/after semester, current-week action, all 22 export weeks, offline enrollment/syllabus and 360/390/412/844px layout. Native file picker requires device verification.');
