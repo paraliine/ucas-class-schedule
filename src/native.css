@@ -27,7 +27,7 @@ body.native-app { background: #fff; padding: 0 var(--safe-area-inset-right, env(
 .native-app .live-week-toolbar select { font-size: 15px; height: 36px; }
 .native-app #timetable-status { font-size: 10px; max-width: 135px; }
 .native-app .schedule-wrap { max-height: none; border: 0; border-radius: 0; overflow: visible; }
-.native-app .timetable { --slot-height: 57px; grid-template-columns: 18px repeat(7, minmax(0, 1fr)); }
+.native-app .timetable { --slot-height: 57px; grid-template-columns: 36px repeat(7, minmax(0, 1fr)); }
 .native-app .schedule-header { top: calc(64px + var(--safe-area-inset-top, 0px)); font-size: 11px; padding: 10px 1px; background: #fff; color: #8596ae; }
 .native-app .schedule-header small { display: block; margin-top: 3px; font-size: 10px; }
 .native-app .schedule-header.is-today { color: #2859a4; font-weight: 600; background: #eef4fc; }
@@ -37,7 +37,7 @@ body.native-app { background: #fff; padding: 0 var(--safe-area-inset-right, env(
 .native-app #semester-start { width: 100%; min-height: 44px; font: inherit; }
 .native-app #semester-preview { font-size: 11px; margin-top: 12px; color: #7a828c; }
 .native-app .period-column { background: #fff; }
-.native-app .schedule-label { border-bottom: 0; color: #b8c2ce; font-size: 9px; }
+.native-app .schedule-label { border-bottom: 0; color: #8796a9; font-size: 10px; }
 .native-app .day-column { border-left-color: #f0f3f7; }
 .native-app .schedule-event { border-left: 0; padding: 7px 4px; border-radius: 5px; gap: 4px; }
 .native-app .schedule-event strong { font-size: 11px; line-height: 1.4; -webkit-line-clamp: 4; }

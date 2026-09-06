@@ -1,6 +1,7 @@
 import { hasSchedule, conflicts, courseFamily, summary, filterCourses, csvCell, validateImport, nextPlanName } from './logic.mjs';
 import { buildTimetableHtml } from './export.mjs';
 import { layoutSchedule } from './schedule.mjs';
+import { PERIOD_TIMES, formatPeriodTimes } from './periods.mjs';
 import { calendarDay, localDate, weekDates, currentTeachingWeek } from './semester.mjs';
 import { initControls, syncControls, closePicker } from './controls.mjs';
 import { isNative, getCatalog, getCourse, saveFile, printPage, setupPlatform } from './platform.mjs';
@@ -150,7 +151,7 @@ function renderTimetable() {
   const layout = layoutSchedule(items, week);
   const dates = isNative ? weekDates(semesterStart, week) : [];
   let html = '<div class="schedule-header"></div>' + days.map((day, i) => `<div class="schedule-header${dates[i] === localDate() ? ' is-today' : ''}">周${day}${dates[i] ? `<small>${Number(dates[i].slice(5, 7))}/${Number(dates[i].slice(8))}</small>` : ''}</div>`).join('');
-  html += `<div class="period-column">${Array.from({ length: maxPeriod }, (_, i) => `<div class="schedule-label">${i + 1}</div>`).join('')}</div>`;
+  html += `<div class="period-column">${Array.from({ length: maxPeriod }, (_, i) => `<div class="schedule-label"><span>${i + 1}</span>${PERIOD_TIMES[i] ? `<small>${PERIOD_TIMES[i][0]}<br>${PERIOD_TIMES[i][1]}</small>` : ''}</div>`).join('')}</div>`;
   html += layout.map(events => `<div class="day-column" style="height:calc(${maxPeriod} * var(--slot-height))">${events.map(event => {
     const rooms = event.rooms.join(' / ') || '教室未公布';
     const weeks = [...event.weeks].sort((a, b) => a - b).join('、');
@@ -200,7 +201,7 @@ function changeView(next) {
 
 async function showDetail(id) {
   const c = courseMap.get(id); if (!c) return;
-  modal(`${modalHead(c.name, c.code)}<div class="modal-body"><dl class="detail-grid">${[['开课院系', c.academy], ['教师', teacher(c)], ['校区', c.campus || '未标注'], ['课程属性', c.attribute], ['学分', c.credits], ['学时', c.hours]].map(([key, value]) => `<div><dt>${key}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl><div class="detail-tabs"><button class="active" data-detail-tab="time">时间与地点</button><button data-detail-tab="syllabus">教学大纲</button></div><div id="detail-time">${c.sessions.map(s => `<div class="session-row"><strong>${esc(shortTime(s))}</strong><div>${esc(s.room || '教室未公布')}<small>第 ${esc(s.weeksText || '未公布')} 周</small></div></div>`).join('') || '<p class="unknown-notice">上课时间未公布</p>'}</div><pre id="detail-syllabus" class="syllabus" hidden>正在读取大纲…</pre></div><div class="modal-footer"><a class="button secondary" href="${esc(c.planUrl)}" target="_blank" rel="noreferrer">${icon('external-link')}原始页面</a><button class="button primary" id="detail-enroll">${icon(activePlan.ids.includes(id) ? 'minus' : 'plus')}${activePlan.ids.includes(id) ? '退选课程' : '加入方案'}</button></div>`);
+  modal(`${modalHead(c.name, c.code)}<div class="modal-body"><dl class="detail-grid">${[['开课院系', c.academy], ['教师', teacher(c)], ['校区', c.campus || '未标注'], ['课程属性', c.attribute], ['学分', c.credits], ['学时', c.hours]].map(([key, value]) => `<div><dt>${key}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl><div class="detail-tabs"><button class="active" data-detail-tab="time">时间与地点</button><button data-detail-tab="syllabus">教学大纲</button></div><div id="detail-time">${c.sessions.map(s => `<div class="session-row"><strong>${esc(shortTime(s))}<small class="session-clock">${esc(formatPeriodTimes(s.periods))}</small></strong><div>${esc(s.room || '教室未公布')}<small>第 ${esc(s.weeksText || '未公布')} 周</small></div></div>`).join('') || '<p class="unknown-notice">上课时间未公布</p>'}</div><pre id="detail-syllabus" class="syllabus" hidden>正在读取大纲…</pre></div><div class="modal-footer"><a class="button secondary" href="${esc(c.planUrl)}" target="_blank" rel="noreferrer">${icon('external-link')}原始页面</a><button class="button primary" id="detail-enroll">${icon(activePlan.ids.includes(id) ? 'minus' : 'plus')}${activePlan.ids.includes(id) ? '退选课程' : '加入方案'}</button></div>`);
   $('detail-enroll').addEventListener('click', () => { $('modal').close(); toggleCourse(id); });
   const target = $('detail-syllabus');
   try { const detail = await getCourse(id); target.textContent = detail.syllabus || '教学大纲未公布'; }

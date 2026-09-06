@@ -91,6 +91,9 @@ try {
   await page.locator('#mobile-back').click();
   await choose('week', '2');
   assert.equal(await page.locator('#timetable .schedule-event').count(), 2);
+  assert.equal(await page.locator('.schedule-label').count(), 13);
+  assert.match(await page.locator('.schedule-label').first().innerText(), /08:30\s+09:15/);
+  assert.match(await page.locator('.schedule-label').last().innerText(), /21:05\s+21:50/);
   await page.locator('#week-next').tap();
   await page.waitForFunction(() => !document.getElementById('week-next').matches(':active'), null, { timeout: 2000 });
   assert.equal(await page.locator('#week-next').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
@@ -129,6 +132,7 @@ try {
   assert.match(await page.locator('#export-week-trigger').innerText(), /22/);
   await page.locator('[data-close]').first().click();
   await page.locator('#timetable .schedule-event').first().click();
+  assert.match(await page.locator('.session-clock').first().innerText(), /08:30 - 10:05/);
   await page.locator('[data-detail-tab="syllabus"]').click();
   await page.waitForFunction(() => document.getElementById('detail-syllabus').textContent.includes('教学目的要求'));
   await page.locator('[data-close]').click();

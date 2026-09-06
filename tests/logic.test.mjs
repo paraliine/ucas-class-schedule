@@ -4,6 +4,20 @@ import { overlaps, conflicts, conflictPairs, filterCourses, validateImport, csvC
 import { buildTimetableHtml } from '../src/export.mjs';
 import { layoutSchedule } from '../src/schedule.mjs';
 import { calendarDay, currentTeachingWeek, weekDates } from '../src/semester.mjs';
+import { PERIOD_TIMES, formatPeriodTimes } from '../src/periods.mjs';
+
+test('lesson clock times preserve gaps and cover the last evening period', () => {
+  assert.equal(PERIOD_TIMES.length, 13);
+  assert.equal(formatPeriodTimes([2, 1, 2]), '08:30 - 10:05');
+  assert.equal(formatPeriodTimes([1, 3]), '08:30 - 09:15 / 10:25 - 11:10');
+  assert.equal(formatPeriodTimes([9]), '17:05 - 17:50');
+  assert.equal(formatPeriodTimes([10, 11, 12, 13]), '18:30 - 21:50');
+  assert.equal(formatPeriodTimes([]), '');
+  assert.equal(formatPeriodTimes([14]), '');
+  const html = buildTimetableHtml({ name: 'test', term: 'fall', courses: [], week: 3 });
+  const data = JSON.parse(html.match(/id="schedule-data">(.*?)<\/script>/s)[1]);
+  assert.deepEqual(data.periodTimes, PERIOD_TIMES);
+});
 
 const session = (weeks, periods = [1, 2], day = 2) => ({ weeks, periods, day });
 const course = (id, weeks = [2, 3]) => ({ id, name: `课程${id}`, code: id, academy: '数学科学学院', campus: '雁栖湖', attribute: '专业课', chief: '张老师', teachers: '', capacity: 30, enrolled: 20, sessions: [session(weeks)], credits: 2 });
