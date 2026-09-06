@@ -234,6 +234,12 @@ async function showDetail(id) {
   catch { target.textContent = '无法读取本地大纲，请关闭后重试。'; }
 }
 
+function refreshCalendar() {
+  if (!isNative || localDate() === lastCalendarDate) return;
+  lastCalendarDate = localDate();
+  renderTimetable();
+}
+
 function jumpToCurrentWeek() {
   if (!isNative) return;
   lastCalendarDate = localDate();
@@ -359,7 +365,7 @@ async function init() {
     $('snapshot-label').textContent = `数据快照 ${new Date(meta.fetchedAt).toLocaleDateString('zh-CN')} · ${courses.length.toLocaleString()} 门课程`;
     $('term-label').textContent = meta.term.replace('学年(秋)第一学期', ' 秋季');
     bindEvents(); changeView(isNative ? 'timetable' : 'catalog');
-    setupPlatform({ onResume: jumpToCurrentWeek, onBack: () => {
+    setupPlatform({ onResume: refreshCalendar, onBack: () => {
       if (closePicker()) return true;
       if ($('modal').open) { $('modal').close(); return true; }
       if ($('plan-menu').open) { $('plan-menu').open = false; return true; }
@@ -367,8 +373,8 @@ async function init() {
       return false;
     } });
     if (isNative) {
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) jumpToCurrentWeek(); });
-      setInterval(() => { if (!document.hidden && localDate() !== lastCalendarDate) jumpToCurrentWeek(); }, 30000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshCalendar(); });
+      setInterval(() => { if (!document.hidden) refreshCalendar(); }, 30000);
       if (!semesterStart) editSemester();
     }
     document.body.dataset.ready = 'true';

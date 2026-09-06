@@ -102,6 +102,15 @@ try {
   assert.equal(await page.locator('#week-prev').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
   await page.locator('#week-next').tap();
   assert.equal(await page.locator('#timetable .schedule-event').count(), 3);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    document.dispatchEvent(new Event('visibilitychange'));
+    delete document.hidden;
+  });
+  assert.equal(await page.locator('#week').inputValue(), '3');
+  assert.equal(await page.locator('#timetable .schedule-event').count(), 3);
   await page.reload();
   await page.waitForSelector('body[data-ready="true"]');
   assert.equal(await page.locator('#semester-form').count(), 0);
@@ -113,6 +122,10 @@ try {
   assert.equal(await page.locator('#week').inputValue(), '2');
   await page.clock.setSystemTime(new Date('2026-09-21T00:01:00+08:00'));
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  assert.equal(await page.locator('#week').inputValue(), '2');
+  assert.equal(await page.locator('#semester-status').innerText(), '当前第 3 周');
+  assert.equal(await page.locator('.schedule-header.is-today').count(), 0);
+  await page.locator('#week-today').click();
   assert.equal(await page.locator('#week').inputValue(), '3');
   assert.match(await page.locator('.schedule-header.is-today').innerText(), /9\/21/);
   for (const [date, expectedWeek, status] of [['2026-10-05', '1', '尚未开学'], ['2026-01-05', '22', '本学期已结束'], ['2026-09-07', '3', '当前第 3 周']]) {
@@ -209,7 +222,8 @@ try {
   });
   await page.clock.setSystemTime(new Date('2026-09-28T00:01:00+08:00'));
   await page.clock.runFor(30001);
-  assert.equal(await page.locator('#week').inputValue(), '4');
+  assert.equal(await page.locator('#week').inputValue(), '3');
+  assert.equal(await page.locator('#semester-status').innerText(), '当前第 4 周');
   // An existing 1.0 plan has no semester date and may have saved all-semester mode.
   await page.evaluate(() => {
     const key = 'ucas-planner-v1-89576';
@@ -241,7 +255,7 @@ try {
   await page.locator('[data-close]').click();
   assert.deepEqual(forbiddenRequests, []);
   assert.deepEqual(errors, []);
-  console.log('PASS: Android timetable homepage, no all-semester mode, semester date settings, automatic week on launch/resume, Monday boundary, before/after semester, current-week action, all 22 export weeks, offline enrollment/syllabus and 360/390/412/844px layout. Native file picker requires device verification.');
+  console.log('PASS: Android timetable homepage, no all-semester mode, semester date settings, current week on launch, preserved browsing week on resume/day rollover, current-week action, all 22 export weeks, offline enrollment/syllabus and 360/390/412/844px layout.');
 } finally {
   await browser.close();
   server.close();
