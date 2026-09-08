@@ -83,14 +83,14 @@ export function csvCell(value) {
   return '"' + text.replaceAll('"', '""') + '"';
 }
 
-export function validateImport(value, courseMap, termId) {
+export function validateImport(value, courseMap, termId, { discardMissing = false } = {}) {
   if (!value || value.version !== 1 || String(value.termId) !== String(termId) || !Array.isArray(value.plans) || !value.plans.length || value.plans.length > 20) {
     throw new Error('方案格式或学期不匹配');
   }
   return value.plans.map((p, i) => {
-    if (!p || typeof p.name !== 'string' || !p.name.trim() || !Array.isArray(p.ids) || p.ids.length > 300 || p.ids.some(id => typeof id !== 'string' || !courseMap.has(id))) {
+    if (!p || typeof p.name !== 'string' || !p.name.trim() || !Array.isArray(p.ids) || p.ids.length > 300 || p.ids.some(id => typeof id !== 'string' || (!discardMissing && !courseMap.has(id)))) {
       throw new Error(`第 ${i + 1} 个方案含有无效课程或名称`);
     }
-    return { id: crypto.randomUUID(), name: p.name.trim().slice(0, 40), ids: [...new Set(p.ids)] };
+    return { id: crypto.randomUUID(), name: p.name.trim().slice(0, 40), ids: [...new Set(p.ids.filter(id => courseMap.has(id)))] };
   });
 }

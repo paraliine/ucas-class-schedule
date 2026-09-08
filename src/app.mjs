@@ -41,12 +41,13 @@ function restore() {
     const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved) {
       if (saved.version !== 1 || !Array.isArray(saved.plans) || !saved.plans.length) throw new Error();
-      const validated = validateImport({ ...saved, termId: meta.termId }, courseMap, meta.termId);
+      const validated = validateImport({ ...saved, termId: meta.termId }, courseMap, meta.termId, { discardMissing: true });
       const index = saved.plans.findIndex(p => p.id === saved.activeId);
       plans = validated;
       activePlan = plans[Math.max(0, index)];
       teachingWeek = Number.isInteger(saved.week) && saved.week >= 0 ? saved.week : 0;
       semesterStart = calendarDay(saved.semesterStart) !== null ? saved.semesterStart : '';
+      if (validated.some((plan, i) => plan.ids.length !== saved.plans[i].ids.length)) persist();
     }
   } catch { toast('已存方案无法读取，已创建新方案'); }
   if (!activePlan) { activePlan = { id: crypto.randomUUID(), name: nextPlanName([]), ids: [] }; plans = [activePlan]; }

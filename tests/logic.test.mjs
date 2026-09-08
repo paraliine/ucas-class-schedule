@@ -131,6 +131,15 @@ test('import rejects wrong semester and unknown courses without partial import',
   assert.throws(() => validateImport({ ...value, plans: [{ name: 'x', ids: ['missing'] }] }, map, '89576'));
 });
 
+test('restoring after a catalog update removes missing courses while preserving all plans', () => {
+  const map = new Map([['a', course('a')]]);
+  const value = { version: 1, termId: '89576', plans: [{ name: '主方案', ids: ['a', 'removed'] }, { name: '备用', ids: ['removed'] }] };
+  const restored = validateImport(value, map, '89576', { discardMissing: true });
+  assert.deepEqual(restored.map(({ name, ids }) => ({ name, ids })), [{ name: '主方案', ids: ['a'] }, { name: '备用', ids: [] }]);
+  assert.throws(() => validateImport(value, map, 'other', { discardMissing: true }));
+  assert.throws(() => validateImport({ ...value, plans: [{ name: '无效', ids: [null] }] }, map, '89576', { discardMissing: true }));
+});
+
 test('CSV escapes cells and neutralizes spreadsheet formulas', () => {
   assert.equal(csvCell('a,"b"'), '"a,""b"""');
   assert.equal(csvCell('=1+1'), '"\'=1+1"');

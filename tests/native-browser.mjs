@@ -254,6 +254,19 @@ try {
   assert.ok(await page.locator('#detail-syllabus').evaluate(element => element.scrollWidth <= element.clientWidth));
   await page.locator('[data-close]').click();
   assert.deepEqual(forbiddenRequests, []);
+  // A refreshed catalog may remove a previously selected course.
+  await page.evaluate(() => {
+    localStorage.setItem('ucas-planner-v1-89576', JSON.stringify({ version: 1, semesterStart: '2026-09-07', activeId: 'keep', plans: [
+      { id: 'empty', name: '备用方案', ids: ['removed-from-catalog'] },
+      { id: 'keep', name: '原有方案', ids: ['314374', 'removed-from-catalog'] }
+    ] }));
+  });
+  await page.reload();
+  await page.waitForSelector('body[data-ready="true"]');
+  assert.match(await page.locator('#plan-select-trigger').innerText(), /原有方案/);
+  const restored = await page.evaluate(() => JSON.parse(localStorage.getItem('ucas-planner-v1-89576')));
+  assert.deepEqual(restored.plans.map(({ name, ids }) => ({ name, ids })), [{ name: '备用方案', ids: [] }, { name: '原有方案', ids: ['314374'] }]);
+  assert.equal(restored.semesterStart, '2026-09-07');
   assert.deepEqual(errors, []);
   console.log('PASS: Android timetable homepage, no all-semester mode, semester date settings, current week on launch, preserved browsing week on resume/day rollover, current-week action, all 22 export weeks, offline enrollment/syllabus and 360/390/412/844px layout.');
 } finally {

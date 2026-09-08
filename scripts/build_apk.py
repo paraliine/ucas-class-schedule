@@ -1,6 +1,6 @@
 """Build a signed APK using a locally installed JDK 21 and Android SDK 36."""
 import hashlib
-import json
+import re
 import os
 from pathlib import Path
 import secrets
@@ -55,7 +55,7 @@ def main():
     apksigner = tools / ("apksigner.bat" if windows else "apksigner")
     unsigned = ROOT / "android/app/build/outputs/apk/release/app-release-unsigned.apk"
     aligned = output / "aligned.apk"
-    version = json.loads((ROOT / "package.json").read_text())["version"]
+    version = re.search(r'\bversionName\s+"([^"]+)"', (ROOT / "android/app/build.gradle").read_text()).group(1)
     apk = output / f"ucas-timetable-android-v{version}.apk"
     run([zipalign, "-f", "-p", "4", unsigned, aligned])
     run([apksigner, "sign", "--ks", key, "--ks-key-alias", alias, "--ks-pass", "env:UCAS_KEYSTORE_PASSWORD", "--key-pass", "env:UCAS_KEYSTORE_PASSWORD", "--out", apk, aligned])
