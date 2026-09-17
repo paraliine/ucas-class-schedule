@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +25,12 @@ public abstract class PlannerWidgetProvider extends AppWidgetProvider {
     }
     @Override public void onDisabled(Context context) { scheduleMidnight(context); }
 
+    static boolean owns(Context context, AppWidgetProviderInfo info) {
+        return info != null && info.provider.getPackageName().equals(context.getPackageName())
+            && (info.provider.getClassName().equals(TodayWidgetProvider.class.getName())
+                || info.provider.getClassName().equals(WeekWidgetProvider.class.getName()));
+    }
+
     static void update(Context context, AppWidgetManager manager, int id, boolean weekly, WidgetSchedule schedule, Bundle options) {
         manager.updateAppWidget(id, WidgetViews.build(context, id, weekly, schedule, options));
         if (!weekly && (Build.VERSION.SDK_INT < 31 || schedule.todayEvents().size() > 100)) manager.notifyAppWidgetViewDataChanged(id, R.id.widget_list);
@@ -31,12 +38,15 @@ public abstract class PlannerWidgetProvider extends AppWidgetProvider {
     static void refreshAll(Context context) {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
         WidgetSchedule schedule = WidgetSchedule.read(context);
+        RuntimeException failure = null;
         for (Class<?> type : new Class<?>[]{TodayWidgetProvider.class, WeekWidgetProvider.class}) {
             for (int id : manager.getAppWidgetIds(new ComponentName(context, type))) {
-                update(context, manager, id, type == WeekWidgetProvider.class, schedule, manager.getAppWidgetOptions(id));
+                try { update(context, manager, id, type == WeekWidgetProvider.class, schedule, manager.getAppWidgetOptions(id)); }
+                catch (RuntimeException error) { failure = error; android.util.Log.e("PlannerWidget", "Cannot refresh widget " + id, error); }
             }
         }
         scheduleMidnight(context);
+        if (failure != null) throw failure;
     }
     static void scheduleMidnight(Context context) {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);

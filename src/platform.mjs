@@ -1,5 +1,6 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App } from '@capacitor/app';
+import { createWidgetSync } from './widget-sync.mjs';
 
 export const isNative = true;
 const Documents = registerPlugin('PlannerDocuments');
@@ -42,19 +43,10 @@ export function setupPlatform({ onBack, onResume, onWidget }) {
   });
 }
 
-// The queue keeps rapid selection changes in order. Browsing weeks does not alter
-// this snapshot: widgets always derive their week from the device calendar.
-let widgetQueue = Promise.resolve(), lastWidgetSnapshot = '';
-export function syncWidgets(snapshot) {
+const syncNativeWidgets = createWidgetSync(data => Widgets.syncState({ data }), () => Widgets.refresh());
+export function syncWidgets(snapshot, options) {
   if (!Capacitor.isNativePlatform()) return Promise.resolve();
-  const data = JSON.stringify(snapshot);
-  if (data === lastWidgetSnapshot) return widgetQueue;
-  lastWidgetSnapshot = data;
-  widgetQueue = widgetQueue.catch(() => {}).then(() => Widgets.syncState({ data })).catch(error => {
-    if (lastWidgetSnapshot === data) lastWidgetSnapshot = '';
-    throw error;
-  });
-  return widgetQueue;
+  return syncNativeWidgets(snapshot, options);
 }
 
 export async function pinWidget(kind) {

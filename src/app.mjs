@@ -37,12 +37,12 @@ function persist() {
   } catch { saveFailed = true; toast('浏览器存储不可用，请备份方案'); }
 }
 
-function updateWidgets() {
+function updateWidgets(options) {
   return syncWidgets({
     version: 1, planName: activePlan?.name || '', semesterStart, termWeeks,
     periodTimes: PERIOD_TIMES,
     courses: selected().map(({ id, name, sessions }) => ({ id, name, sessions })),
-  }).catch(() => { toast('桌面组件同步失败，请重新打开 App 重试'); });
+  }, options).then(() => true).catch(() => { toast('桌面组件同步失败，请重新打开 App 重试'); return false; });
 }
 
 function chooseWidget() {
@@ -53,7 +53,7 @@ function chooseWidget() {
   document.querySelectorAll('[data-widget-kind]').forEach(button => button.addEventListener('click', async () => {
     button.disabled = true;
     try {
-      await updateWidgets();
+      if (!await updateWidgets({ force: true })) return;
       const result = await pinWidget(button.dataset.widgetKind);
       if (result.supported) { $('modal').close(); }
       else toast('请长按桌面，在小组件列表中选择「国科大课表」');
@@ -394,7 +394,7 @@ async function init() {
     $('term-label').textContent = meta.term.replace('学年(秋)第一学期', ' 秋季');
     bindEvents(); changeView(isNative ? 'timetable' : 'catalog');
     updateWidgets();
-    setupPlatform({ onResume: refreshCalendar, onWidget: () => {
+    setupPlatform({ onResume: () => { refreshCalendar(); updateWidgets({ force: true }); }, onWidget: () => {
       closePicker(); $('modal').close(); $('plan-menu').open = false;
       changeView('timetable'); jumpToCurrentWeek();
     }, onBack: () => {

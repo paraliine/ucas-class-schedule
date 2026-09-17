@@ -1,7 +1,9 @@
 package cn.local.ucascourseplanner;
 
 import android.appwidget.AppWidgetManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import com.getcapacitor.JSObject;
@@ -17,9 +19,19 @@ public class PlannerWidgetPlugin extends Plugin {
         getBridge().execute(() -> {
             try {
                 WidgetSchedule.save(getContext(), call.getString("data"));
-                PlannerWidgetProvider.refreshAll(getContext());
+                if (getActivity() instanceof WidgetConfigurationActivity) {
+                    ((WidgetConfigurationActivity) getActivity()).snapshotReady();
+                } else PlannerWidgetProvider.refreshAll(getContext());
                 call.resolve();
             } catch (Exception error) { call.reject("无法同步桌面组件", error); }
+        });
+    }
+
+    @PluginMethod
+    public void refresh(PluginCall call) {
+        getBridge().execute(() -> {
+            try { PlannerWidgetProvider.refreshAll(getContext()); call.resolve(); }
+            catch (Exception error) { call.reject("无法刷新桌面组件", error); }
         });
     }
 
@@ -40,7 +52,12 @@ public class PlannerWidgetPlugin extends Plugin {
                     extras.putParcelable(AppWidgetManager.EXTRA_APPWIDGET_PREVIEW,
                         WidgetViews.build(getContext(), -1, "week".equals(kind), WidgetSchedule.read(getContext()), size));
                 }
-                supported = manager.requestPinAppWidget(new ComponentName(getContext(), provider), extras, null);
+                // Pinning can complete after the app's last sync and does not run the
+                // configuration activity. Refresh again when the launcher confirms it.
+                PendingIntent ready = PendingIntent.getBroadcast(getContext(), 103,
+                    new Intent(getContext(), WidgetRefreshReceiver.class).setAction("cn.local.ucascourseplanner.WIDGET_PINNED"),
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                supported = manager.requestPinAppWidget(new ComponentName(getContext(), provider), extras, ready);
             }
             JSObject result = new JSObject(); result.put("supported", supported); call.resolve(result);
         });
