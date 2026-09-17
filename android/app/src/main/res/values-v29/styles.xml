@@ -1,0 +1,1 @@
+<resources><style name="AppTheme.NoActionBar" parent="AppTheme.NoActionBar.Base"><item name="android:forceDarkAllowed">false</item></style></resources>

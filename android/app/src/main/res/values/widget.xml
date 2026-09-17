@@ -1,0 +1,7 @@
+<resources>
+    <color name="widget_surface">#FAFCFF</color><color name="widget_text">#303A49</color><color name="widget_secondary">#6E7B8E</color><color name="widget_line">#E3E9F1</color>
+    <string name="widget_today_name">今日课程</string><string name="widget_week_name">本周课表</string>
+    <string name="widget_today_description">今天的课程、上课时间和教室，跟随当前选课方案</string>
+    <string name="widget_week_description">本周七天课表，支持调整大小，跟随当前选课方案</string>
+    <string name="widget_setup">打开 App，设置学期开始日期</string>
+</resources>

@@ -1,0 +1,10 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="68dp" android:orientation="horizontal" android:gravity="center_vertical" android:padding="10dp" android:background="@drawable/widget_course_0">
+    <LinearLayout android:layout_width="60dp" android:layout_height="wrap_content" android:orientation="vertical">
+        <TextView android:id="@+id/widget_start" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="17sp" android:textStyle="bold" android:textColor="#315E90"/>
+        <TextView android:id="@+id/widget_end" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="12sp" android:textColor="#315E90"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+        <TextView android:id="@+id/widget_course_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="2" android:ellipsize="end" android:textSize="14sp" android:textStyle="bold" android:textColor="#315E90"/>
+        <TextView android:id="@+id/widget_room" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:maxLines="2" android:ellipsize="end" android:textSize="12sp" android:textColor="#315E90"/>
+    </LinearLayout>
+</LinearLayout>

@@ -6,7 +6,7 @@ import { layoutSchedule } from './schedule.mjs';
 import { PERIOD_TIMES, formatPeriodTimes } from './periods.mjs';
 import { calendarDay, localDate, weekDates, currentTeachingWeek } from './semester.mjs';
 import { initControls, syncControls, closePicker } from './controls.mjs';
-import { isNative, getCatalog, getCourse, saveFile, printPage, setupPlatform } from './platform.mjs';
+import { isNative, getCatalog, getCourse, saveFile, printPage, setupPlatform, syncWidgets, pinWidget } from './platform.mjs';
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -33,7 +33,33 @@ function persist() {
   try {
     localStorage.setItem(storageKey, JSON.stringify({ version: 1, plans, activeId: activePlan.id, week: teachingWeek, semesterStart }));
     saveFailed = false;
+    updateWidgets();
   } catch { saveFailed = true; toast('浏览器存储不可用，请备份方案'); }
+}
+
+function updateWidgets() {
+  return syncWidgets({
+    version: 1, planName: activePlan?.name || '', semesterStart, termWeeks,
+    periodTimes: PERIOD_TIMES,
+    courses: selected().map(({ id, name, sessions }) => ({ id, name, sessions })),
+  }).catch(() => { toast('桌面组件同步失败，请重新打开 App 重试'); });
+}
+
+function chooseWidget() {
+  modal(`${modalHead('添加桌面组件', '跟随当前方案，按日期显示课程')}<div class="modal-body widget-picker">
+    <button class="widget-choice" data-widget-kind="today"><span class="widget-choice-icon">${icon('list')}</span><span><strong>今日课程</strong><small>时间、课程和教室，可上下滚动</small></span>${icon('chevron-right')}</button>
+    <button class="widget-choice" data-widget-kind="week"><span class="widget-choice-icon">${icon('calendar-days')}</span><span><strong>本周课表</strong><small>周一至周日，沿用课表配色</small></span>${icon('chevron-right')}</button>
+    <p class="widget-hint">也可以长按桌面，在小组件列表中找到「国科大课表」。</p></div>`);
+  document.querySelectorAll('[data-widget-kind]').forEach(button => button.addEventListener('click', async () => {
+    button.disabled = true;
+    try {
+      await updateWidgets();
+      const result = await pinWidget(button.dataset.widgetKind);
+      if (result.supported) { $('modal').close(); }
+      else toast('请长按桌面，在小组件列表中选择「国科大课表」');
+    } catch { toast('无法打开桌面添加窗口，请从桌面的小组件列表添加'); }
+    finally { button.disabled = false; }
+  }));
 }
 
 function restore() {
@@ -310,6 +336,7 @@ function bindEvents() {
   $('week-prev').addEventListener('click', () => changeWeek(Math.max(1, teachingWeek - 1)));
   $('week-next').addEventListener('click', () => changeWeek(Math.min(termWeeks, teachingWeek + 1)));
   $('semester-settings').addEventListener('click', editSemester);
+  $('add-widget').addEventListener('click', chooseWidget);
   $('semester-status').addEventListener('click', editSemester);
   $('week-today').addEventListener('click', () => semesterStart ? jumpToCurrentWeek() : editSemester());
   $('print-timetable').addEventListener('click', () => printPage());
@@ -366,7 +393,11 @@ async function init() {
     $('snapshot-label').textContent = `数据快照 ${new Date(meta.fetchedAt).toLocaleDateString('zh-CN')} · ${courses.length.toLocaleString()} 门课程`;
     $('term-label').textContent = meta.term.replace('学年(秋)第一学期', ' 秋季');
     bindEvents(); changeView(isNative ? 'timetable' : 'catalog');
-    setupPlatform({ onResume: refreshCalendar, onBack: () => {
+    updateWidgets();
+    setupPlatform({ onResume: refreshCalendar, onWidget: () => {
+      closePicker(); $('modal').close(); $('plan-menu').open = false;
+      changeView('timetable'); jumpToCurrentWeek();
+    }, onBack: () => {
       if (closePicker()) return true;
       if ($('modal').open) { $('modal').close(); return true; }
       if ($('plan-menu').open) { $('plan-menu').open = false; return true; }

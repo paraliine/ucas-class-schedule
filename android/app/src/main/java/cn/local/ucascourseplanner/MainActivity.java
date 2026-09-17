@@ -22,6 +22,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(PlannerDocumentsPlugin.class);
+        registerPlugin(PlannerWidgetPlugin.class);
         super.onCreate(savedInstanceState);
         if (getBridge() == null) return;
         configureEdgeToEdge();

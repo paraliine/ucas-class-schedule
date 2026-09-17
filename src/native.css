@@ -69,3 +69,14 @@ body.native-app { background: #fff; padding: 0 var(--safe-area-inset-right, env(
   .native-app .schedule-event { padding: 6px 3px; }
   .native-app .schedule-event strong { font-size: 10px; }
 }
+
+.widget-picker { display: grid; gap: 12px; }
+.widget-choice { display: flex; align-items: center; gap: 14px; width: 100%; padding: 18px 14px; text-align: left; border: 1px solid var(--border, #e3e6ec); border-radius: 12px; background: #fff; color: inherit; }
+.widget-choice > span:nth-child(2) { display: grid; gap: 6px; flex: 1; }
+.widget-choice strong { font-size: 16px; font-weight: 600; }
+.widget-choice small, .widget-hint { font-size: 13px; color: #737e8d; line-height: 1.6; }
+.widget-choice-icon { display: grid; place-items: center; width: 42px; height: 48px; color: #315e90; background: #eaf1fa; border-radius: 9px; }
+.widget-choice > svg { width: 18px; color: #8a95a5; }
+.widget-choice:active { background: #f4f7fb; }
+.widget-choice:focus-visible { outline: 2px solid #315e90; outline-offset: 3px; }
+.widget-hint { margin: 4px 0 0; }

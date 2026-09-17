@@ -66,6 +66,14 @@ try {
   assert.ok(await page.locator('body').evaluate(e => e.classList.contains('native-app')));
   assert.equal(await page.locator('.app-header nav').isVisible(), false);
   assert.equal(await page.locator('#catalog-view').isVisible(), false);
+  await page.locator('#plan-menu summary').click();
+  await page.locator('#add-widget').click();
+  assert.equal(await page.locator('[data-widget-kind]').count(), 2);
+  assert.match(await page.locator('#modal-content').innerText(), /今日课程[\s\S]*本周课表/);
+  await page.locator('[data-widget-kind=week]').click();
+  assert.match(await page.locator('#toast').innerText(), /长按桌面/);
+  await page.screenshot({ path: 'outputs/android-widget-picker.png' });
+  await page.locator('#modal [data-close]').click();
   await page.locator('#add-courses').click();
   assert.ok(await page.locator('#catalog-view').isVisible());
   assert.equal(await page.locator('#timetable-view').isVisible(), false);
