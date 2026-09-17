@@ -23,6 +23,8 @@ import java.util.List;
 
 /** Custom-drawn weekly grid and native, scrollable daily rows. No running WebView required. */
 final class WidgetViews {
+    // Same sans-serif / regular face as the Android timetable's course text.
+    private static final Typeface TIMETABLE_FONT = Typeface.create("sans-serif", Typeface.NORMAL);
     static final int[] BACKGROUNDS = {0xffe0ecfa, 0xffddece4, 0xfff3e9cf, 0xfff2dee8, 0xffe6dff3, 0xffdcecef};
     static final int[] FOREGROUNDS = {0xff315e90, 0xff416e55, 0xff745f2c, 0xff8d536e, 0xff705b96, 0xff3c727b};
     static final int[] DRAWABLES = {R.drawable.widget_course_0, R.drawable.widget_course_1,
@@ -93,18 +95,22 @@ final class WidgetViews {
     static String description(WidgetSchedule schedule) {
         StringBuilder result = new StringBuilder(schedule.weekLabel());
         for (WidgetSchedule.Event e : schedule.events) result.append("；").append(WidgetSchedule.DAYS[e.day - 1])
-            .append(' ').append(schedule.periodTime(e.start, false)).append(' ').append(e.name).append(' ').append(e.room());
+            .append(' ').append(schedule.periodTime(e.start, false)).append('—').append(schedule.periodTime(e.end, true))
+            .append(' ').append(e.name).append(' ').append(e.room());
         return result.toString();
     }
 
     static Bitmap weekBitmap(Context context, WidgetSchedule schedule, int width, int height) {
-        // Bound shared-memory bitmap size even on very large launchers/tablets.
-        float scale = Math.min(2f, Math.min(1000f / width, 1400f / height));
-        Bitmap bitmap = Bitmap.createBitmap(Math.round(width * scale), Math.round(height * scale), Bitmap.Config.ARGB_8888);
+        // Render at screen density so small type is not enlarged from a 2x image.
+        // Keep the same 5.6 MB shared-memory limit on large launchers/tablets.
+        float scale = Math.min(context.getResources().getDisplayMetrics().density,
+            (float) Math.sqrt(1400000d / ((double) width * height)));
+        Bitmap bitmap = Bitmap.createBitmap(Math.max(1, (int) (width * scale)), Math.max(1, (int) (height * scale)), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap); canvas.scale(scale, scale);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+        paint.setTypeface(TIMETABLE_FONT);
         int secondary = context.getColor(R.color.widget_secondary), line = context.getColor(R.color.widget_line);
-        float gutter = 29, header = 31, column = (width - gutter) / 7f, period = (height - header) / 13f;
+        float gutter = 36, header = 34, column = (width - gutter) / 7f, period = (height - header) / 13f;
         paint.setColor(line); paint.setStrokeWidth(0.6f);
         for (int p = 0; p <= 13; p++) canvas.drawLine(gutter, header + period * p, width, header + period * p, paint);
         for (int day = 0; day <= 7; day++) canvas.drawLine(gutter + column * day, header, gutter + column * day, height, paint);
@@ -114,15 +120,21 @@ final class WidgetViews {
                 paint.setColor(BACKGROUNDS[0]); canvas.drawRoundRect(x + 1, 0, x + column - 1, header - 3, 5, 5, paint);
             }
             paint.setColor(day + 1 == schedule.today ? FOREGROUNDS[0] : secondary);
-            paint.setTextAlign(Paint.Align.CENTER); paint.setTypeface(Typeface.DEFAULT);
+            paint.setTextAlign(Paint.Align.CENTER);
             paint.setTextSize(10); canvas.drawText(WidgetSchedule.DAYS[day], x + column / 2, 11, paint);
-            paint.setTextSize(8); canvas.drawText(schedule.dates[day], x + column / 2, 23, paint);
+            paint.setTextSize(9); canvas.drawText(schedule.dates[day], x + column / 2, 25, paint);
         }
         for (int p = 1; p <= 13; p++) {
-            float y = header + (p - 1) * period;
-            paint.setColor(secondary); paint.setTextAlign(Paint.Align.CENTER); paint.setTextSize(10);
-            canvas.drawText(String.valueOf(p), gutter / 2 - 1, y + period / 2 - 1, paint);
-            paint.setTextSize(6.7f); canvas.drawText(schedule.periodTime(p, false), gutter / 2 - 1, y + period / 2 + 8, paint);
+            float center = header + (p - .5f) * period;
+            paint.setColor(secondary); paint.setTextAlign(Paint.Align.CENTER);
+            // Each row owns a complete start/end pair; the next row is never
+            // mistaken for the end of this lesson (especially across breaks).
+            float labelScale = Math.min(1f, period / 30f);
+            paint.setTextSize(9 * labelScale);
+            canvas.drawText(String.valueOf(p), gutter / 2 - 2, center - 7 * labelScale, paint);
+            paint.setTextSize(7.5f * labelScale);
+            canvas.drawText(schedule.periodTime(p, false), gutter / 2 - 2, center + 3 * labelScale, paint);
+            canvas.drawText(schedule.periodTime(p, true), gutter / 2 - 2, center + 12 * labelScale, paint);
         }
         for (WidgetSchedule.Event e : schedule.events) {
             float x = gutter + column * (e.day - 1) + column * e.lane / e.lanes + 1.5f;
@@ -137,17 +149,17 @@ final class WidgetViews {
             float font = Math.min(10.5f, Math.max(8, column / 4.5f));
             int available = Math.max(1, (int) (h - 8));
             int titleLines = Math.max(1, Math.min(4, (int) ((available - 12) / (font * 1.18f))));
-            float used = drawText(canvas, e.name, x + 3, y + 4, w - 6, font, FOREGROUNDS[e.color], titleLines, true);
+            float used = drawText(canvas, e.name, x + 3, y + 4, w - 6, font, FOREGROUNDS[e.color], titleLines);
             if (available - used >= 10) drawText(canvas, e.room(), x + 3, y + 6 + used, w - 6, Math.max(7.5f, font - 1), FOREGROUNDS[e.color],
-                Math.max(1, (int) ((available - used - 2) / font)), false);
+                Math.max(1, (int) ((available - used - 2) / font)));
             canvas.restore();
         }
         return bitmap;
     }
 
-    private static float drawText(Canvas canvas, String value, float x, float y, float width, float size, int color, int lines, boolean bold) {
-        TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG); paint.setColor(color); paint.setTextSize(size);
-        paint.setTypeface(bold ? Typeface.create("sans-serif-medium", Typeface.NORMAL) : Typeface.DEFAULT);
+    private static float drawText(Canvas canvas, String value, float x, float y, float width, float size, int color, int lines) {
+        TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.SUBPIXEL_TEXT_FLAG); paint.setColor(color); paint.setTextSize(size);
+        paint.setTypeface(TIMETABLE_FONT);
         StaticLayout layout = StaticLayout.Builder.obtain(value, 0, value.length(), paint, Math.max(1, (int) width))
             .setAlignment(Layout.Alignment.ALIGN_NORMAL).setIncludePad(false).setLineSpacing(1, 1)
             .setMaxLines(lines).setEllipsize(TextUtils.TruncateAt.END).build();
