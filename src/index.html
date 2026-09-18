@@ -5,14 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <title>国科大课表</title>
-  <style>
-    html { background: #fff; }
-    #app-shell[hidden], #startup-screen[hidden], #startup-retry[hidden] { display: none !important; }
-    #startup-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; background: #fff; color: #8794a4; font: 13px/1.5 sans-serif; text-align: center; }
-    #startup-screen h1 { margin: 0; color: #303a49; font-size: 18px; font-weight: 500; }
-    #startup-screen p { margin: 0; }
-    #startup-retry { margin-top: 10px; padding: 8px 16px; border: 1px solid #dce1e7; border-radius: 6px; background: #fff; color: #315e90; font: inherit; }
-  </style>
   <link rel="icon" href="assets/ucas.ico">
   <link rel="stylesheet" href="styles.css?v=20260906-columns-3">
   <link rel="stylesheet" href="live-timetable.css">
@@ -22,9 +14,7 @@
   <script defer src="assets/lucide.js"></script>
   <script type="module" src="app.mjs?v=1.1-semester"></script>
 </head>
-<body class="native-app" data-view="timetable">
-  <section id="startup-screen" role="status" aria-live="polite"><h1>国科大课表</h1><p id="startup-message">正在读取课表…</p><button id="startup-retry" type="button" hidden>重新加载</button></section>
-  <div id="app-shell" hidden inert aria-busy="true">
+<body data-view="catalog">
   <header class="app-header">
     <div class="brand-group"><button id="mobile-back" class="icon-button native-only" data-view="timetable" title="返回课表" aria-label="返回课表"><i data-lucide="arrow-left"></i></button><a class="brand" href="./"><img src="assets/ucas.ico" alt="国科大校徽" width="28" height="28"><span id="app-title">国科大课表</span></a></div>
     <nav aria-label="主导航"><button class="nav-item active" data-view="catalog">选课</button><button class="nav-item" data-view="selected">已选 <span id="nav-selected">0</span></button><button class="nav-item" data-view="timetable">课表</button></nav>
@@ -75,6 +65,5 @@
     <footer class="page-footer"><span id="snapshot-label">本地课程快照</span><span>国科大公开开课表</span></footer>
   </main>
   <dialog id="modal"><div id="modal-content"></div></dialog><div id="toast" class="toast" role="status" hidden></div><input type="file" id="import-file" accept="application/json,.json" hidden>
-  </div>
 </body>
 </html>

@@ -372,13 +372,12 @@ function bindEvents() {
 }
 
 async function init() {
-  $('startup-retry').addEventListener('click', () => location.reload());
+  initControls({ weekDetail: value => {
+    const dates = weekDates(semesterStart, Number(value));
+    return dates.length ? `${Number(dates[0].slice(5, 7))}/${Number(dates[0].slice(8))} - ${Number(dates[6].slice(5, 7))}/${Number(dates[6].slice(8))}` : '';
+  } });
+  icons();
   try {
-    initControls({ weekDetail: value => {
-      const dates = weekDates(semesterStart, Number(value));
-      return dates.length ? `${Number(dates[0].slice(5, 7))}/${Number(dates[0].slice(8))} - ${Number(dates[6].slice(5, 7))}/${Number(dates[6].slice(8))}` : '';
-    } });
-    icons();
     const data = await getCatalog(); courses = data.courses.map(({ capacity, enrolled, ...course }) => course); meta = data.meta;
     if (!courses.length) throw new Error('课程库为空');
     courseMap = new Map(courses.map(c => [c.id, c])); storageKey = `ucas-planner-v1-${meta.termId}`;
@@ -408,21 +407,13 @@ async function init() {
     if (isNative) {
       document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshCalendar(); });
       setInterval(() => { if (!document.hidden) refreshCalendar(); }, 30000);
+      if (!semesterStart) editSemester();
     }
-    // Reveal a complete, restored screen in one frame, never the initial controls.
-    $('app-shell').hidden = false;
-    $('app-shell').inert = false;
-    $('app-shell').setAttribute('aria-busy', 'false');
-    $('startup-screen').hidden = true;
     document.body.dataset.ready = 'true';
-    if (isNative && !semesterStart) editSemester();
   } catch (error) {
-    $('app-shell').hidden = true;
-    $('app-shell').inert = true;
-    $('startup-screen').hidden = false;
-    $('startup-message').textContent = '无法读取本地课表，请重新加载。';
-    $('startup-retry').hidden = false;
-    document.body.dataset.ready = 'error';
+    $('result-count').textContent = error.message;
+    $('course-rows').innerHTML = '<tr><td colspan="5" class="loading error-state">无法加载课程，请确认本地服务正在运行后刷新页面。</td></tr>';
+    toast('课程加载失败');
   }
 }
 init();
