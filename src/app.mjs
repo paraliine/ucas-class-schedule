@@ -14,7 +14,7 @@ const icon = name => `<i data-lucide="${name}"></i>`;
 const icons = () => { syncControls(); window.lucide?.createIcons(); };
 const days = ['一', '二', '三', '四', '五', '六', '日'];
 let courses = [], meta = {}, courseMap = new Map(), plans = [], activePlan, storageKey;
-let view = 'catalog', page = 1, teachingWeek = 0, saveFailed = false, toastTimer;
+let view = isNative ? 'timetable' : 'catalog', page = 1, teachingWeek = 0, saveFailed = false, toastTimer;
 let semesterStart = '', termWeeks = 22, lastCalendarDate = localDate();
 let bulkImport;
 const PAGE_SIZE = 20;
@@ -376,7 +376,6 @@ async function init() {
     const dates = weekDates(semesterStart, Number(value));
     return dates.length ? `${Number(dates[0].slice(5, 7))}/${Number(dates[0].slice(8))} - ${Number(dates[6].slice(5, 7))}/${Number(dates[6].slice(8))}` : '';
   } });
-  icons();
   try {
     const data = await getCatalog(); courses = data.courses.map(({ capacity, enrolled, ...course }) => course); meta = data.meta;
     if (!courses.length) throw new Error('课程库为空');
@@ -411,9 +410,15 @@ async function init() {
     }
     document.body.dataset.ready = 'true';
   } catch (error) {
-    $('result-count').textContent = error.message;
-    $('course-rows').innerHTML = '<tr><td colspan="5" class="loading error-state">无法加载课程，请确认本地服务正在运行后刷新页面。</td></tr>';
-    toast('课程加载失败');
+    if (isNative) {
+      $('timetable-status').textContent = '课程加载失败';
+      $('unscheduled').innerHTML = '<div class="empty-state" role="alert"><p>无法读取离线课程数据，请重试。</p><button class="button secondary" id="retry-catalog">重新加载</button></div>';
+      $('retry-catalog').addEventListener('click', () => window.location.reload());
+    } else {
+      $('result-count').textContent = error.message;
+      $('course-rows').innerHTML = '<tr><td colspan="5" class="loading error-state">无法加载课程，请确认本地服务正在运行后刷新页面。</td></tr>';
+      toast('课程加载失败');
+    }
   }
 }
 init();
